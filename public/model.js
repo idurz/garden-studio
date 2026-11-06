@@ -10,7 +10,7 @@ export function createProject(width = 80, height = 60, name = 'My garden') {
     surface: Array(width * height).fill(''),
     water: Array(width * height).fill(false),
     electric: Array(width * height).fill(false),
-    plants: []
+    plants: [], buildings: []
   };
 }
 
@@ -24,6 +24,7 @@ export function clearProjectLayers(project, layers) {
   for (const layer of UTILITIES) {
     if (layers.includes(layer)) project[layer].fill(false);
   }
+  if (layers.includes('buildings')) project.buildings = [];
   if (layers.includes('image')) project.image = null;
 }
 
@@ -59,14 +60,42 @@ export function plantFits(project, plant, ignoreId = null) {
       plant.width < 1 || plant.height < 1 ||
       !inBounds(project, plant.x, plant.y) ||
       !inBounds(project, plant.x + plant.width - 1, plant.y + plant.height - 1)) return false;
+  const buildingCells = new Set((project.buildings || []).flatMap(building => building.cells.map(cell => cell.index)));
   for (let y = plant.y; y < plant.y + plant.height; y++) {
     for (let x = plant.x; x < plant.x + plant.width; x++) {
       if (project.surface[y * project.width + x] !== 'sand') return false;
+      if (buildingCells.has(y * project.width + x)) return false;
     }
   }
   return !project.plants.some(other => other.id !== ignoreId &&
     plant.x < other.x + other.width && plant.x + plant.width > other.x &&
     plant.y < other.y + other.height && plant.y + plant.height > other.y);
+}
+
+export function buildingAt(project, x, y) {
+  const index = y * project.width + x;
+  return (project.buildings || []).find(building => building.cells.some(cell => cell.index === index));
+}
+
+export function editBuildingCell(project, building, x, y, type) {
+  if (!inBounds(project, x, y)) return 'Outside the garden.';
+  const index = y * project.width + x;
+  const existing = building.cells.find(cell => cell.index === index);
+  if (type === 'erase') {
+    if (!existing) return null;
+    building.cells = building.cells.filter(cell => cell.index !== index);
+    return null;
+  }
+  if (!['wall', 'door', 'window'].includes(type)) return 'Unknown building material.';
+  if (type !== 'wall' && !existing) return 'Draw doors and windows over this building’s walls.';
+  if (!existing) {
+    if (buildingAt(project, x, y)) return 'Another building already occupies that square.';
+    if (plantAt(project, x, y)) return 'Move or remove the plant before drawing a wall there.';
+    building.cells.push({ index, type });
+  } else {
+    existing.type = type;
+  }
+  return null;
 }
 
 export function plantAt(project, x, y) {
@@ -87,6 +116,21 @@ export function validateProject(project) {
       !project.surface.every(cell => cell === '' || MATERIALS.includes(cell)) ||
       !UTILITIES.every(key => Array.isArray(project[key]) && project[key].length === size && project[key].every(cell => typeof cell === 'boolean')) ||
       !Array.isArray(project.plants) || project.plants.length > size) return 'Invalid grid data.';
+  if (project.buildings !== undefined) {
+    if (!Array.isArray(project.buildings) || project.buildings.length > size) return 'Invalid building data.';
+    const ids = new Set(), occupied = new Set();
+    for (const building of project.buildings) {
+      if (!building || typeof building.id !== 'string' || !building.id || ids.has(building.id) ||
+          typeof building.name !== 'string' || !building.name.trim() || building.name.length > 200 ||
+          !Array.isArray(building.cells) || building.cells.length > size) return 'Invalid building data.';
+      ids.add(building.id);
+      for (const cell of building.cells) {
+        if (!cell || !Number.isInteger(cell.index) || cell.index < 0 || cell.index >= size ||
+            !['wall', 'door', 'window'].includes(cell.type) || occupied.has(cell.index)) return 'Invalid building cells.';
+        occupied.add(cell.index);
+      }
+    }
+  }
   const ids = new Set();
   for (const plant of project.plants) {
     if (!plant || typeof plant.id !== 'string' || !plant.id || ids.has(plant.id) ||

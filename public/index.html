@@ -57,19 +57,34 @@
         <p class="section-description">Choose a layer to edit. Use the eye to show or hide it.</p>
         <div class="layer-list" id="layer-list">
           <div class="layer-row active" data-layer-row="surface"><button class="layer-select" data-layer="surface"><span class="layer-icon surface-icon"><svg><use href="#i-grid"/></svg></span><span><strong>Ground cover</strong><small>Materials &amp; surfaces</small></span></button><button class="eye-button" data-visibility="surface" aria-label="Hide ground cover" title="Hide ground cover"><svg><use href="#i-eye"/></svg></button></div>
+          <div class="layer-row" data-layer-row="buildings"><button class="layer-select" data-layer="buildings"><span class="layer-icon building-icon"><svg><use href="#i-grid"/></svg></span><span><strong>Buildings</strong><small>Walls, doors &amp; windows</small></span></button><button class="eye-button" data-visibility="buildings" aria-label="Hide buildings" title="Hide buildings"><svg><use href="#i-eye"/></svg></button></div>
           <div class="layer-row" data-layer-row="plants"><button class="layer-select" data-layer="plants"><span class="layer-icon plants-icon"><svg><use href="#i-leaf"/></svg></span><span><strong>Plants &amp; trees</strong><small>Your living garden</small></span></button><button class="eye-button" data-visibility="plants" aria-label="Hide plants and trees" title="Hide plants and trees"><svg><use href="#i-eye"/></svg></button></div>
           <div class="layer-row" data-layer-row="water"><button class="layer-select" data-layer="water"><span class="layer-icon water-icon"><svg><use href="#i-drop"/></svg></span><span><strong>Water pipes</strong><small>Below the surface</small></span></button><button class="eye-button" data-visibility="water" aria-label="Show water pipes" title="Show water pipes"><svg><use href="#i-eye"/></svg></button></div>
           <div class="layer-row" data-layer-row="electric"><button class="layer-select" data-layer="electric"><span class="layer-icon electric-icon"><svg><use href="#i-bolt"/></svg></span><span><strong>Electricity</strong><small>Connections &amp; cables</small></span></button><button class="eye-button" data-visibility="electric" aria-label="Show electricity" title="Show electricity"><svg><use href="#i-eye"/></svg></button></div>
         </div>
       </section>
       <section class="sidebar-section materials-section" id="materials-section">
-        <div class="section-title"><span>GROUND MATERIALS</span><span class="section-hint">03</span></div>
+        <div class="section-title"><span>MATERIALS</span><span class="section-hint">03</span></div>
         <p class="section-description">Pick a material, then draw on the grid.</p>
         <div class="material-list">
           <button class="material-button active" data-material="sand"><span class="material-swatch sand"></span><span><strong>Soil / sand</strong><small>For plants &amp; trees</small></span><span class="material-check">✓</span></button>
           <button class="material-button" data-material="grass"><span class="material-swatch grass"></span><span><strong>Grass</strong><small>Soft &amp; green</small></span><span class="material-check">✓</span></button>
           <button class="material-button" data-material="paving"><span class="material-swatch paving"></span><span><strong>Paving</strong><small>Paths &amp; patios</small></span><span class="material-check">✓</span></button>
         </div>
+      </section>
+      <section class="sidebar-section" id="buildings-section" hidden>
+        <div class="section-title"><span>MATERIALS</span><span class="section-hint">03</span></div>
+        <p class="section-description">Choose a building, then draw walls anywhere on the plan. Draw doors and windows over its walls.</p>
+        <label class="building-label" for="building-select">Building</label>
+        <select id="building-select" aria-label="Building"></select>
+        <p class="section-description" id="building-status" aria-live="polite">Add or select a building to begin.</p>
+        <button class="button button-quiet building-add" id="add-building" type="button"><svg><use href="#i-plus"/></svg> Add building</button>
+        <div class="material-list">
+          <button class="material-button active" data-building-material="wall"><span class="material-swatch wall"></span><span><strong>Wall</strong><small>Draw wall segments</small></span><span class="material-check">✓</span></button>
+          <button class="material-button" data-building-material="door"><span class="material-swatch door"></span><span><strong>Door</strong><small>Draw over a wall</small></span><span class="material-check">✓</span></button>
+          <button class="material-button" data-building-material="window"><span class="material-swatch window"></span><span><strong>Window</strong><small>Draw over a wall</small></span><span class="material-check">✓</span></button>
+        </div>
+        <form id="building-form" class="building-form"><label>Building name<input name="name" maxlength="200" required></label><button class="button button-quiet" type="submit">Save name</button><button class="delete-button" id="delete-building" type="button">Remove building</button></form>
       </section>
       <div class="sidebar-tip"><span class="tip-icon">✳</span><div><strong>A little tip</strong><p>Each square is 10 × 10 cm. Zoom in for the finer details.</p></div></div>
     </aside>
@@ -127,7 +142,7 @@
       <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" id="settings-submit" type="submit">Save settings</button></div>
       <div id="settings-confirmation" class="settings-confirmation" hidden role="region" aria-labelledby="settings-confirmation-title">
         <strong id="settings-confirmation-title">Replace the current garden?</strong>
-        <p>All existing materials, plants, utilities and the reference image will be removed. Export a backup first if you want to keep them.</p>
+        <p>All existing materials, buildings, plants, utilities and the reference image will be removed. Export a backup first if you want to keep them.</p>
         <div class="dialog-actions"><button class="button button-quiet" id="settings-keep" type="button">Keep current garden</button><button class="button button-dark" id="settings-confirm" type="button">Replace garden</button></div>
       </div>
       <div id="backup-section"><div class="dialog-divider"></div>
@@ -140,6 +155,7 @@
       <p>Choose what to clear. Your garden name and dimensions will stay the same. Export a backup first if you may want to restore the current plan.</p>
       <fieldset class="clear-options"><legend>Items to clear</legend>
         <label><input type="checkbox" name="layer" value="surface"> Ground cover</label>
+        <label><input type="checkbox" name="layer" value="buildings"> Buildings</label>
         <label><input type="checkbox" name="layer" value="plants"> Plants &amp; trees</label>
         <label><input type="checkbox" name="layer" value="water"> Water pipes</label>
         <label><input type="checkbox" name="layer" value="electric"> Electricity</label>

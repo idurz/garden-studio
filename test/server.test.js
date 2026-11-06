@@ -39,9 +39,14 @@ test('server persists valid projects and rejects invalid data', async t => {
   assert.deepEqual(await (await fetch(`${url}/api/project`)).json(), project);
   assert.equal((await fetch(`${url}/`)).status, 200);
   assert.equal((await fetch(`${url}/../server.js`)).status, 404);
+  const legacy = createProject(2, 2, 'Legacy');
+  delete legacy.buildings;
+  assert.equal((await fetch(`${url}/api/project`, { method: 'PUT', body: JSON.stringify(legacy) })).status, 200);
+  assert.deepEqual(await (await fetch(`${url}/api/project`)).json(), legacy);
   const large = createProject(190, 310, 'Large garden');
   large.surface[58899] = 'sand';
   large.water[58899] = true;
+  large.buildings.push({ id: 'home', name: 'House', cells: [{ index: 0, type: 'wall' }, { index: 1, type: 'door' }, { index: 2, type: 'window' }] });
   const largeSave = await fetch(`${url}/api/project`, { method: 'PUT', body: JSON.stringify(large) });
   assert.equal(largeSave.status, 200);
   assert.deepEqual(await (await fetch(`${url}/api/project`)).json(), large);

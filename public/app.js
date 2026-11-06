@@ -1,4 +1,4 @@
-import { CELL_CM, MAX_CELLS, MAX_PROJECT_BYTES, clearProjectLayers, createProject, createSample, inBounds, plantAt, plantFits, validateProject } from './model.js';
+import { CELL_CM, MAX_CELLS, MAX_PROJECT_BYTES, buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, inBounds, plantAt, plantFits, validateProject } from './model.js';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#garden-canvas');
@@ -8,13 +8,22 @@ const plantForm = $('#plant-form');
 const settingsForm = $('#settings-form');
 const state = {
   project: null, layer: 'surface', tool: 'select', material: 'sand', selectedId: null,
-  visible: { surface: true, plants: true, water: false, electric: false },
+  buildingId: null, buildingMaterial: 'wall',
+  visible: { surface: true, buildings: true, plants: true, water: false, electric: false },
   zoom: 1, image: null, drawing: false, lastCell: null, dirty: 0, saved: 0, saving: false, canSave: false
 };
 let saveTimer;
 let toastTimer;
 let settingsMode = 'edit';
 let pendingSettings = null;
+
+function newId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 15) | 64;
+  bytes[8] = (bytes[8] & 63) | 128;
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 function toast(message) {
   const element = $('#toast');
@@ -148,6 +157,21 @@ function render() {
       if (y + 1 < p.height && x + 1 < p.width && p[layer][index + p.width + 1] && !p[layer][index + 1] && !p[layer][index + p.width]) {
         ctx.moveTo(cx, cy); ctx.lineTo(cx + cell, cy + cell);
       }
+      if (state.visible.buildings) {
+        const colors = { wall: '#746b63', door: '#c78d51', window: '#77a9b5' };
+        for (const building of p.buildings) {
+          for (const item of building.cells) {
+            const x = (item.index % p.width) * cell, y = Math.floor(item.index / p.width) * cell;
+            ctx.fillStyle = colors[item.type];
+            ctx.fillRect(x, y, cell + .2, cell + .2);
+            if (building.id === state.buildingId && state.layer === 'buildings' && cell >= 4) {
+              ctx.strokeStyle = '#372f29';
+              ctx.lineWidth = .5;
+              ctx.strokeRect(x, y, cell, cell);
+            }
+          }
+        }
+      }
       if (y + 1 < p.height && x > 0 && p[layer][index + p.width - 1] && !p[layer][index - 1] && !p[layer][index + p.width]) {
         ctx.moveTo(cx, cy); ctx.lineTo(cx - cell, cy + cell);
       }
@@ -181,18 +205,44 @@ function updateControls() {
   document.querySelectorAll('[data-visibility]').forEach(button => {
     const visible = state.visible[button.dataset.visibility];
     button.classList.toggle('is-hidden', !visible);
-    const label = button.dataset.visibility === 'surface' ? 'ground cover' : button.dataset.visibility === 'plants' ? 'plants and trees' : button.dataset.visibility === 'water' ? 'water pipes' : 'electricity';
+    const label = button.dataset.visibility === 'surface' ? 'ground cover' : button.dataset.visibility === 'buildings' ? 'buildings' : button.dataset.visibility === 'plants' ? 'plants and trees' : button.dataset.visibility === 'water' ? 'water pipes' : 'electricity';
     button.setAttribute('aria-label', `${visible ? 'Hide' : 'Show'} ${label}`);
     button.title = `${visible ? 'Hide' : 'Show'} ${label}`;
   });
   document.querySelectorAll('[data-material]').forEach(button => button.classList.toggle('active', button.dataset.material === state.material));
   $('#materials-section').hidden = state.layer !== 'surface';
+  $('#buildings-section').hidden = state.layer !== 'buildings';
+  document.querySelectorAll('[data-building-material]').forEach(button => button.classList.toggle('active', button.dataset.buildingMaterial === state.buildingMaterial));
+  updateBuildingControls();
   let hint = 'Select a plant to see its details.';
-  if (state.tool === 'paint') hint = state.layer === 'plants' ? 'Click a soil area to add a plant.' : `Click and drag to draw ${state.layer === 'surface' ? state.material : state.layer === 'water' ? 'water pipes' : 'electric cables'}.`;
+  if (state.layer === 'buildings' && state.tool === 'select') hint = 'Click a building wall to select that building.';
+  if (state.tool === 'paint') hint = state.layer === 'plants' ? 'Click a soil area to add a plant.' : state.layer === 'buildings' ? 'Select or add a building, then draw walls or openings. Zoom in for details.' : `Click and drag to draw ${state.layer === 'surface' ? state.material : state.layer === 'water' ? 'water pipes' : 'electric cables'}.`;
   if (state.tool === 'erase') hint = state.layer === 'plants' ? 'Click a plant to remove it.' : 'Click and drag to erase from the selected layer.';
   $('#editor-hint').textContent = hint;
   canvas.style.cursor = state.tool === 'select' ? 'pointer' : 'crosshair';
   render();
+}
+
+function updateBuildingControls() {
+  const select = $('#building-select');
+  select.replaceChildren();
+  const empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = 'Select a building';
+  select.append(empty);
+  for (const building of state.project.buildings) {
+    const option = document.createElement('option');
+    option.value = building.id;
+    option.textContent = building.name;
+    select.append(option);
+  }
+  const building = state.project.buildings.find(item => item.id === state.buildingId);
+  select.value = building?.id || '';
+  $('#building-form').hidden = !building;
+  $('#building-status').textContent = building
+    ? building.cells.length ? `${building.cells.length} building squares drawn. You can start another wall anywhere.` : 'No walls yet. Draw the first wall anywhere on the plan.'
+    : 'Add or select a building to begin.';
+  if (building && document.activeElement !== $('#building-form').elements.name) $('#building-form').elements.name.value = building.name;
 }
 
 function showPlant(id) {
@@ -222,6 +272,22 @@ function paintCell(x, y) {
   const p = state.project;
   if (!inBounds(p, x, y)) return false;
   const index = y * p.width + x;
+  if (state.layer === 'buildings') {
+    const building = p.buildings.find(item => item.id === state.buildingId);
+    if (!building) {
+      if (!state.warnedBuilding) { toast('Add or select a building first.'); state.warnedBuilding = true; }
+      return false;
+    }
+    const type = state.tool === 'erase' ? 'erase' : state.buildingMaterial;
+    const before = building.cells.find(cell => cell.index === index);
+    if ((type === 'erase' && !before) || (before && before.type === type)) return false;
+    const error = editBuildingCell(p, building, x, y, type);
+    if (error) {
+      if (!state.warnedBuilding) { toast(error); state.warnedBuilding = true; }
+      return false;
+    }
+    return true;
+  }
   if (state.layer === 'surface') {
     const value = state.tool === 'erase' ? '' : state.material;
     if (p.surface[index] === value) return false;
@@ -250,10 +316,10 @@ function paintLine(from, to) {
     modified = paintCell(x, y) || modified;
     if (x === to.x && y === to.y) break;
     const twice = error * 2;
-    if (twice > -dy) { error -= dy; x += sx; }
+    if (twice > -dy) { error -= dy; x += sx; if (state.layer === 'buildings' && twice < dx) modified = paintCell(x, y) || modified; }
     if (twice < dx) { error += dx; y += sy; }
   }
-  if (modified) { changed(); render(); }
+  if (modified) { changed(); if (state.layer === 'buildings') updateBuildingControls(); render(); }
 }
 
 canvas.addEventListener('pointerdown', event => {
@@ -262,8 +328,15 @@ canvas.addEventListener('pointerdown', event => {
   if (!inBounds(state.project, cell.x, cell.y)) return;
   event.preventDefault();
   if (state.tool === 'select') {
-    showPlant(state.visible.plants ? plantAt(state.project, cell.x, cell.y)?.id : null);
+    if (state.layer === 'buildings') {
+      state.buildingId = state.visible.buildings ? buildingAt(state.project, cell.x, cell.y)?.id || null : null;
+      updateControls();
+    } else showPlant(state.visible.plants ? plantAt(state.project, cell.x, cell.y)?.id : null);
     return;
+  }
+  if (state.layer === 'buildings' && !state.visible.buildings) {
+    state.visible.buildings = true;
+    updateControls();
   }
   if (state.layer === 'plants') {
     const existing = plantAt(state.project, cell.x, cell.y);
@@ -273,7 +346,7 @@ canvas.addEventListener('pointerdown', event => {
         showPlant(null); changed();
       }
     } else {
-      const plant = { id: crypto.randomUUID(), name: 'New plant', type: 'plant', x: cell.x, y: cell.y, width: 3, height: 3, purchased: '', retailer: '', prune: '', notes: '' };
+      const plant = { id: newId(), name: 'New plant', type: 'plant', x: cell.x, y: cell.y, width: 3, height: 3, purchased: '', retailer: '', prune: '', notes: '' };
       if (!plantFits(state.project, plant)) { plant.width = 1; plant.height = 1; }
       if (!plantFits(state.project, plant)) { toast('Choose an unoccupied soil / sand square for your plant.'); return; }
       state.project.plants.push(plant);
@@ -284,6 +357,7 @@ canvas.addEventListener('pointerdown', event => {
   }
   state.drawing = true;
   state.warnedPlant = false;
+  state.warnedBuilding = false;
   state.lastCell = cell;
   canvas.setPointerCapture(event.pointerId);
   paintLine(cell, cell);
@@ -317,6 +391,34 @@ document.querySelectorAll('[data-material]').forEach(button => button.addEventLi
   state.layer = 'surface'; state.visible.surface = true; state.tool = 'paint';
   updateControls();
 }));
+document.querySelectorAll('[data-building-material]').forEach(button => button.addEventListener('click', () => {
+  state.buildingMaterial = button.dataset.buildingMaterial;
+  state.layer = 'buildings'; state.visible.buildings = true; state.tool = 'paint';
+  updateControls();
+}));
+$('#add-building').addEventListener('click', () => {
+  const building = { id: newId(), name: `Building ${state.project.buildings.length + 1}`, cells: [] };
+  state.project.buildings.push(building);
+  state.buildingId = building.id; state.buildingMaterial = 'wall'; state.tool = 'paint';
+  changed(); updateControls();
+  toast('Draw the first wall anywhere on the plan.');
+});
+$('#building-select').addEventListener('change', event => { state.buildingId = event.target.value || null; updateControls(); });
+$('#building-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const building = state.project.buildings.find(item => item.id === state.buildingId);
+  const name = event.currentTarget.elements.name.value.trim();
+  if (!building || !name) { toast('Enter a building name.'); return; }
+  building.name = name;
+  changed(); updateControls(); toast('Building name saved.');
+});
+$('#delete-building').addEventListener('click', () => {
+  const building = state.project.buildings.find(item => item.id === state.buildingId);
+  if (!building || !confirm(`Remove ${building.name} and all its walls, doors and windows?`)) return;
+  state.project.buildings = state.project.buildings.filter(item => item.id !== building.id);
+  state.buildingId = null;
+  changed(); updateControls();
+});
 $('#zoom-in').addEventListener('click', () => { state.zoom = Math.min(3, state.zoom * 1.25); render(); });
 $('#zoom-out').addEventListener('click', () => { state.zoom = Math.max(.01, state.zoom / 1.25); render(); });
 $('#fit-button').addEventListener('click', fit);
@@ -370,7 +472,7 @@ function openSettings(mode) {
   $('#settings-submit').textContent = mode === 'new' ? 'Create new project' : 'Save settings';
   $('#settings-warning').textContent = mode === 'new'
     ? 'A new project replaces the current garden. Export a backup first if you want to keep it.'
-    : 'Changing the size clears the entire layout and reference image after confirmation.';
+    : 'Changing the size clears the entire layout, including buildings, and reference image after confirmation.';
   $('#backup-section').hidden = mode === 'new';
   $('#settings-error').textContent = '';
   updateSizePreview();
@@ -391,8 +493,10 @@ $('#cancel-settings').addEventListener('click', () => $('#settings-dialog').clos
 function saveSettings({ name, width, height }, replace) {
   if (replace) {
     state.project = createProject(width, height, name);
+    state.buildingId = null;
     state.image = null;
     showPlant(null);
+    updateControls();
     fit();
   } else {
     state.project.name = name;
@@ -445,11 +549,12 @@ clearForm.addEventListener('submit', event => {
     $('#clear-error').textContent = 'Select at least one item to clear.';
     return;
   }
-  const names = { surface: 'ground cover', plants: 'plants and trees', water: 'water pipes', electric: 'electricity', image: 'reference image' };
+  const names = { surface: 'ground cover', buildings: 'buildings', plants: 'plants and trees', water: 'water pipes', electric: 'electricity', image: 'reference image' };
   const selected = layers.map(layer => names[layer]);
   if (layers.includes('surface') && !layers.includes('plants')) selected.push('plants and trees (required when clearing ground cover)');
   if (!confirm(`Clear ${selected.join(', ')}? This cannot be undone. Export a backup first if needed.`)) return;
   clearProjectLayers(state.project, layers);
+  if (layers.includes('buildings')) { state.buildingId = null; updateControls(); }
   if (layers.includes('surface') || layers.includes('plants')) showPlant(null);
   if (layers.includes('image')) state.image = null;
   changed(); render();
@@ -503,7 +608,8 @@ $('#backup-input').addEventListener('change', async event => {
     const error = validateProject(project);
     if (error) throw new Error(error);
     if (!confirm('Importing this backup will replace your current garden. Continue?')) return;
-    state.project = project; showPlant(null); loadImage(); changed(); updateOverview(); fit();
+    state.project = project; state.project.buildings ??= []; state.buildingId = null;
+    showPlant(null); loadImage(); changed(); updateOverview(); updateControls(); fit();
     $('#settings-dialog').close();
     toast('Backup imported.');
   } catch (error) { toast(`Could not import backup: ${error.message}`); }
@@ -523,6 +629,7 @@ async function init() {
     if (!response.ok) throw new Error(project.error || 'Could not load your garden.');
     if (project && validateProject(project)) throw new Error('Stored project data is invalid.');
     state.project = project || createSample();
+    state.project.buildings ??= [];
     state.canSave = true;
     if (!project) changed(); else status('All changes saved');
     updateOverview(); loadImage(); updateControls(); fit();

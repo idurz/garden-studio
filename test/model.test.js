@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clearProjectLayers, createProject, createSample, plantAt, plantFits, validateProject } from '../public/model.js';
+import { buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, plantAt, plantFits, validateProject } from '../public/model.js';
 
 function plant(overrides = {}) {
   return { id: 'one', name: 'Fern', type: 'plant', x: 0, y: 0, width: 2, height: 2, purchased: '', retailer: '', prune: '', notes: '', ...overrides };
@@ -83,5 +83,47 @@ test('clearing only plants keeps their soil and utilities', () => {
   assert.deepEqual(project.surface, surface);
   assert.equal(project.plants.length, 0);
   assert.equal(project.water[0], true);
+  assert.equal(validateProject(project), null);
+});
+
+test('buildings support independent wall segments, doors and windows without overlapping plants', () => {
+  const project = createProject(6, 6);
+  project.surface.fill('sand');
+  const building = { id: 'house', name: 'House', cells: [] };
+  project.buildings.push(building);
+  assert.equal(editBuildingCell(project, building, 1, 1, 'wall'), null);
+  assert.equal(editBuildingCell(project, building, 4, 4, 'wall'), null);
+  assert.equal(editBuildingCell(project, building, 2, 1, 'wall'), null);
+  assert.equal(editBuildingCell(project, building, 3, 1, 'wall'), null);
+  assert.equal(editBuildingCell(project, building, 2, 1, 'door'), null);
+  assert.equal(editBuildingCell(project, building, 3, 1, 'window'), null);
+  assert.match(editBuildingCell(project, building, 1, 2, 'door'), /walls/);
+  assert.equal(editBuildingCell(project, building, 2, 1, 'erase'), null);
+  assert.equal(editBuildingCell(project, building, 2, 1, 'door'), 'Draw doors and windows over this building’s walls.');
+  assert.equal(editBuildingCell(project, building, 2, 1, 'wall'), null);
+  assert.equal(editBuildingCell(project, building, 2, 1, 'door'), null);
+  assert.equal(buildingAt(project, 2, 1), building);
+  assert.equal(plantFits(project, plant({ x: 1, y: 1 })), false);
+  assert.equal(validateProject(project), null);
+  assert.equal(editBuildingCell(project, building, 3, 1, 'erase'), null);
+  const other = { id: 'shed', name: 'Shed', cells: [] };
+  project.buildings.push(other);
+  assert.match(editBuildingCell(project, other, 1, 1, 'wall'), /Another building/);
+  project.plants.push(plant({ x: 4, y: 2 }));
+  assert.match(editBuildingCell(project, other, 4, 2, 'wall'), /plant/);
+  assert.equal(validateProject(project), null);
+});
+
+test('validates building data and reads legacy projects without buildings', () => {
+  const project = createProject(4, 4);
+  delete project.buildings;
+  assert.equal(validateProject(project), null);
+  project.buildings = [{ id: 'b', name: 'House', cells: [{ index: 0, type: 'wall' }, { index: 2, type: 'window' }] }];
+  assert.equal(validateProject(project), null);
+  project.buildings[0].cells[1].index = 1;
+  assert.equal(validateProject(project), null);
+  project.buildings.push({ id: 'c', name: 'Shed', cells: [{ index: 1, type: 'door' }] });
+  assert.match(validateProject(project), /cells/);
+  clearProjectLayers(project, ['buildings']);
   assert.equal(validateProject(project), null);
 });
