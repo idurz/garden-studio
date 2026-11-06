@@ -1,0 +1,11 @@
+services:
+  garden-studio:
+    build: .
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - garden-data:/data
+    restart: unless-stopped
+
+volumes:
+  garden-data:

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f3">
+  <title>Garden Studio — Plan your outdoor space</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M20 4c-9 0-15 3-15 10a6 6 0 0 0 6 6c7 0 10-6 9-16Z"/><path d="M4 21c3-5 7-8 12-11"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></symbol>
+    <symbol id="i-pointer" viewBox="0 0 24 24"><path d="m5 3 13 10-6 1-3 6-4-17Z"/></symbol>
+    <symbol id="i-brush" viewBox="0 0 24 24"><path d="m14 14 7-7-4-4-7 7M14 14l-4-4-3 3 4 4 3-3ZM7 13c-4 0-4 4-5 6 4 1 7 0 9-2"/></symbol>
+    <symbol id="i-eraser" viewBox="0 0 24 24"><path d="m3 15 10-10a2 2 0 0 1 3 0l5 5a2 2 0 0 1 0 3l-7 7H8l-5-5ZM7 11l7 7M14 20h8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M4 17v3h16v-3"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2m4 0h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <symbol id="i-drop" viewBox="0 0 24 24"><path d="M12 3s-6 7-6 11a6 6 0 0 0 12 0c0-4-6-11-6-11Z"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m13 2-8 12h6l-1 8 9-12h-6l0-8Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  </svg>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><svg><use href="#i-leaf"/></svg></div><div><strong>garden<span>studio</span></strong><small>MAKE ROOM TO GROW</small></div></div>
+    <div class="project-heading"><span class="project-label">YOUR PROJECT</span><strong id="project-name">The garden plan</strong><span class="project-chevron">⌄</span></div>
+    <div class="top-actions">
+      <span class="save-status" id="save-status"><span class="status-dot"></span> Loading</span>
+      <button class="button button-quiet" id="retry-save" hidden>Retry save</button>
+      <button class="button button-quiet" id="backup-button"><svg><use href="#i-download"/></svg><span>Export</span></button>
+      <button class="button button-dark" id="settings-button"><svg><use href="#i-settings"/></svg><span>Project settings</span></button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <aside class="sidebar left-sidebar">
+      <div class="sidebar-header"><span class="eyebrow">YOUR WORKSPACE</span><h2>Design tools</h2><p>Bring your garden to life, one square at a time.</p></div>
+      <section class="sidebar-section">
+        <div class="section-title"><span>TOOLS</span><span class="section-hint">01</span></div>
+        <div class="tool-grid" role="group" aria-label="Editing tools">
+          <button class="tool-button active" data-tool="select"><svg><use href="#i-pointer"/></svg><span>Select</span></button>
+          <button class="tool-button" data-tool="paint"><svg><use href="#i-brush"/></svg><span>Draw</span></button>
+          <button class="tool-button" data-tool="erase"><svg><use href="#i-eraser"/></svg><span>Erase</span></button>
+        </div>
+      </section>
+      <section class="sidebar-section">
+        <div class="section-title"><span>LAYERS</span><span class="section-hint">02</span></div>
+        <p class="section-description">Choose a layer to edit. Use the eye to show or hide it.</p>
+        <div class="layer-list" id="layer-list">
+          <div class="layer-row active" data-layer-row="surface"><button class="layer-select" data-layer="surface"><span class="layer-icon surface-icon"><svg><use href="#i-grid"/></svg></span><span><strong>Ground cover</strong><small>Materials &amp; surfaces</small></span></button><button class="eye-button" data-visibility="surface" aria-label="Hide ground cover" title="Hide ground cover"><svg><use href="#i-eye"/></svg></button></div>
+          <div class="layer-row" data-layer-row="plants"><button class="layer-select" data-layer="plants"><span class="layer-icon plants-icon"><svg><use href="#i-leaf"/></svg></span><span><strong>Plants &amp; trees</strong><small>Your living garden</small></span></button><button class="eye-button" data-visibility="plants" aria-label="Hide plants and trees" title="Hide plants and trees"><svg><use href="#i-eye"/></svg></button></div>
+          <div class="layer-row" data-layer-row="water"><button class="layer-select" data-layer="water"><span class="layer-icon water-icon"><svg><use href="#i-drop"/></svg></span><span><strong>Water pipes</strong><small>Below the surface</small></span></button><button class="eye-button" data-visibility="water" aria-label="Show water pipes" title="Show water pipes"><svg><use href="#i-eye"/></svg></button></div>
+          <div class="layer-row" data-layer-row="electric"><button class="layer-select" data-layer="electric"><span class="layer-icon electric-icon"><svg><use href="#i-bolt"/></svg></span><span><strong>Electricity</strong><small>Connections &amp; cables</small></span></button><button class="eye-button" data-visibility="electric" aria-label="Show electricity" title="Show electricity"><svg><use href="#i-eye"/></svg></button></div>
+        </div>
+      </section>
+      <section class="sidebar-section materials-section" id="materials-section">
+        <div class="section-title"><span>GROUND MATERIALS</span><span class="section-hint">03</span></div>
+        <p class="section-description">Pick a material, then draw on the grid.</p>
+        <div class="material-list">
+          <button class="material-button active" data-material="sand"><span class="material-swatch sand"></span><span><strong>Soil / sand</strong><small>For plants &amp; trees</small></span><span class="material-check">✓</span></button>
+          <button class="material-button" data-material="grass"><span class="material-swatch grass"></span><span><strong>Grass</strong><small>Soft &amp; green</small></span><span class="material-check">✓</span></button>
+          <button class="material-button" data-material="paving"><span class="material-swatch paving"></span><span><strong>Paving</strong><small>Paths &amp; patios</small></span><span class="material-check">✓</span></button>
+        </div>
+      </section>
+      <div class="sidebar-tip"><span class="tip-icon">✳</span><div><strong>A little tip</strong><p>Each square is 10 × 10 cm. Zoom in for the finer details.</p></div></div>
+    </aside>
+
+    <section class="workspace">
+      <div class="workspace-heading"><div><div class="breadcrumb">MY GARDEN <span>/</span> <strong>DESIGN EDITOR</strong></div><h1>Your garden, imagined<span>.</span></h1><p>Make a little space for big ideas.</p></div><div class="heading-badge"><span></span> DESIGN MODE</div></div>
+      <div class="editor-card">
+        <div class="editor-toolbar"><div class="canvas-title"><span class="canvas-title-icon"><svg><use href="#i-grid"/></svg></span><div><strong>Garden layout</strong><small id="canvas-dimensions">6.0 m × 4.0 m · 10 cm grid</small></div></div><div class="canvas-actions"><button class="icon-button" id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-label">100%</span><button class="icon-button" id="zoom-in" aria-label="Zoom in">+</button><span class="toolbar-divider"></span><button class="fit-button" id="fit-button">Fit to view</button></div></div>
+        <div class="canvas-scroll" id="canvas-scroll"><div class="canvas-wrap" id="canvas-wrap"><canvas id="garden-canvas" aria-label="Garden plan editor">Your browser does not support canvas.</canvas></div></div>
+        <div class="editor-footer"><div><span class="footer-dot"></span><span id="editor-hint">Select a plant to see its details.</span></div><span id="coordinates">10 cm per square</span></div>
+      </div>
+      <div class="workspace-bottom"><span>✳ &nbsp; A garden is a work in progress. Enjoy the process.</span><span>MADE FOR GROWING THINGS</span></div>
+    </section>
+
+    <aside class="sidebar right-sidebar">
+      <div class="sidebar-header inspector-header"><span class="eyebrow">THE DETAILS</span><h2 id="inspector-title">Your garden</h2><p id="inspector-subtitle">A closer look at your plan.</p></div>
+      <div id="garden-inspector">
+        <section class="inspector-section"><div class="section-title"><span>PROJECT OVERVIEW</span></div><div class="overview-grid"><div><small>GARDEN SIZE</small><strong id="overview-size">—</strong></div><div><small>GRID SIZE</small><strong>10 cm</strong></div><div><small>GARDEN AREA</small><strong id="overview-area">—</strong></div><div><small>PLANTS</small><strong id="overview-plants">—</strong></div></div></section>
+        <section class="inspector-section"><div class="section-title"><span>DESIGN REFERENCE</span></div><div class="reference-card"><span class="reference-icon"><svg><use href="#i-image"/></svg></span><strong id="reference-title">Start with a sketch</strong><p>Upload a plan to trace over. It will be stretched to your garden's dimensions.</p><label class="reference-upload" for="image-input"><svg><use href="#i-plus"/></svg> Upload an image</label><input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden><div id="image-controls" hidden><label class="opacity-label" for="image-opacity">Image opacity <span id="opacity-value">55%</span></label><input id="image-opacity" type="range" min="0" max="100" value="55"><button class="text-button" id="remove-image">Remove image</button></div></div></section>
+        <section class="inspector-section"><div class="section-title"><span>HOW TO GET STARTED</span></div><div class="steps"><div><span>01</span><p><strong>Set the scene</strong>Set your garden size in project settings.</p></div><div><span>02</span><p><strong>Lay the groundwork</strong>Draw soil, grass, or paving onto the grid.</p></div><div><span>03</span><p><strong>Watch it grow</strong>Add plants and keep their details handy.</p></div></div></section>
+      </div>
+      <div id="plant-inspector" hidden>
+        <form id="plant-form" class="plant-form">
+          <div class="selected-plant-badge"><span>✳</span><div><strong>Plant details</strong><small>Save your changes below</small></div></div>
+          <label>Plant name<input name="name" maxlength="200" required placeholder="e.g. Lavender"></label>
+          <label>Type<select name="type"><option value="plant">Plant</option><option value="shrub">Shrub</option><option value="tree">Tree</option></select></label>
+          <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="1500" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="1500" step="10" required></label></div>
+          <p class="field-help">Size must be in multiples of 10 cm and fit on soil / sand.</p>
+          <div class="form-pair"><label>Column<input name="x" type="number" min="1" required></label><label>Row<input name="y" type="number" min="1" required></label></div>
+          <p class="field-help">Position is measured in grid squares from the top left.</p>
+          <label>Date purchased<input name="purchased" type="date"></label>
+          <label>Purchased from<input name="retailer" maxlength="500" placeholder="Garden centre, nursery..."></label>
+          <label>When to prune / shape<input name="prune" maxlength="500" placeholder="e.g. Late winter"></label>
+          <label>Notes<textarea name="notes" rows="3" maxlength="5000" placeholder="Care instructions, variety, or anything else..."></textarea></label>
+          <p class="form-error" id="plant-error" role="alert"></p>
+          <button class="button button-dark form-save" type="submit">Save plant details</button>
+          <button class="delete-button" id="delete-plant" type="button">Remove plant</button>
+        </form>
+      </div>
+      <div class="sidebar-bottom"><svg><use href="#i-leaf"/></svg><span>Growing something lovely.</span></div>
+    </aside>
+  </main>
+
+  <dialog id="settings-dialog">
+    <form id="settings-form">
+      <div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2>Project settings</h2></div><button class="icon-button" type="button" id="close-settings" aria-label="Close settings"><svg><use href="#i-close"/></svg></button></div>
+      <p>Set the size of your garden. Each dimension must be a multiple of 10 cm.</p>
+      <label>Project name<input name="name" maxlength="200" required></label>
+      <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="1500" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="1500" step="10" required></label></div>
+      <p class="field-help">Maximum size: 15 × 15 m. Changing the size starts a new empty layout.</p>
+      <p class="form-error" id="settings-error" role="alert"></p>
+      <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" type="submit">Save settings</button></div>
+      <div class="dialog-divider"></div>
+      <div class="backup-section"><div><strong>Have a backup?</strong><p>Import a Garden Studio JSON backup to replace this project.</p></div><label class="button button-quiet" for="backup-input">Import backup</label><input type="file" id="backup-input" accept="application/json,.json" hidden></div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
