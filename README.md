@@ -14,6 +14,22 @@ Open [http://localhost:3000](http://localhost:3000). The default Compose configu
 
 To update after downloading changes, run `docker compose up --build -d` again.
 
+## Published container image
+
+Like Mail Automation, a push to `main` runs a GitHub Actions workflow that builds and publishes `ghcr.io/idurz/garden-studio:latest` and a tag for the full commit SHA. The image is available after the workflow has successfully run; check the package's GitHub visibility settings if an unauthenticated pull is denied.
+
+To run the published image without cloning or building the project:
+
+```sh
+docker pull ghcr.io/idurz/garden-studio:latest
+docker run -d --name garden-studio --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  -v garden-studio-data:/data \
+  ghcr.io/idurz/garden-studio:latest
+```
+
+Open [http://localhost:3000](http://localhost:3000). The named volume retains your garden when the container is removed. To update, pull the image again, remove the old container with `docker rm -f garden-studio`, and run the same `docker run` command. The source-build Compose setup uses a separate volume; export and import a backup to move a garden between the two setups. The published image is built for the GitHub Actions runner's architecture (currently `linux/amd64`).
+
 Alternatively, with Node.js 20 or newer:
 
 ```sh
