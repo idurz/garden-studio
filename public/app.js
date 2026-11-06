@@ -157,27 +157,27 @@ function render() {
       if (y + 1 < p.height && x + 1 < p.width && p[layer][index + p.width + 1] && !p[layer][index + 1] && !p[layer][index + p.width]) {
         ctx.moveTo(cx, cy); ctx.lineTo(cx + cell, cy + cell);
       }
-      if (state.visible.buildings) {
-        const colors = { wall: '#746b63', door: '#c78d51', window: '#77a9b5' };
-        for (const building of p.buildings) {
-          for (const item of building.cells) {
-            const x = (item.index % p.width) * cell, y = Math.floor(item.index / p.width) * cell;
-            ctx.fillStyle = colors[item.type];
-            ctx.fillRect(x, y, cell + .2, cell + .2);
-            if (building.id === state.buildingId && state.layer === 'buildings' && cell >= 4) {
-              ctx.strokeStyle = '#372f29';
-              ctx.lineWidth = .5;
-              ctx.strokeRect(x, y, cell, cell);
-            }
-          }
-        }
-      }
       if (y + 1 < p.height && x > 0 && p[layer][index + p.width - 1] && !p[layer][index - 1] && !p[layer][index + p.width]) {
         ctx.moveTo(cx, cy); ctx.lineTo(cx - cell, cy + cell);
       }
       ctx.stroke();
       ctx.beginPath(); ctx.arc(cx, cy, Math.max(1.5, cell * .14), 0, Math.PI * 2); ctx.fill();
     });
+  }
+  if (state.visible.buildings) {
+    const colors = { wall: '#746b63', door: '#c78d51', window: '#77a9b5' };
+    for (const building of p.buildings) {
+      for (const item of building.cells) {
+        const x = (item.index % p.width) * cell, y = Math.floor(item.index / p.width) * cell;
+        ctx.fillStyle = colors[item.type];
+        ctx.fillRect(x, y, cell + .2, cell + .2);
+        if (building.id === state.buildingId && state.layer === 'buildings' && cell >= 4) {
+          ctx.strokeStyle = '#372f29';
+          ctx.lineWidth = .5;
+          ctx.strokeRect(x, y, cell, cell);
+        }
+      }
+    }
   }
   if (state.visible.plants) {
     for (const plant of p.plants) {
