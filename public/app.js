@@ -1,4 +1,4 @@
-import { CELL_CM, MAX_CELLS, clearProjectLayers, createProject, createSample, inBounds, plantAt, plantFits, validateProject } from './model.js';
+import { CELL_CM, MAX_CELLS, MAX_PROJECT_BYTES, clearProjectLayers, createProject, createSample, inBounds, plantAt, plantFits, validateProject } from './model.js';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#garden-canvas');
@@ -92,7 +92,7 @@ function fit() {
   const p = state.project;
   const availableWidth = Math.max(100, scroll.clientWidth - 80);
   const availableHeight = Math.max(100, scroll.clientHeight - 80);
-  state.zoom = Math.max(0.2, Math.min(1.5, availableWidth / (p.width * 12), availableHeight / (p.height * 12)));
+  state.zoom = Math.min(1.5, availableWidth / (p.width * 12), availableHeight / (p.height * 12));
   render();
 }
 
@@ -102,7 +102,7 @@ function render() {
   const cell = 12 * state.zoom;
   const width = p.width * cell;
   const height = p.height * cell;
-  const ratio = window.devicePixelRatio || 1;
+  const ratio = Math.min(window.devicePixelRatio || 1, 8192 / width, 8192 / height, Math.sqrt(16000000 / (width * height)));
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
   canvas.width = Math.ceil(width * ratio);
@@ -317,7 +317,7 @@ document.querySelectorAll('[data-material]').forEach(button => button.addEventLi
   updateControls();
 }));
 $('#zoom-in').addEventListener('click', () => { state.zoom = Math.min(3, state.zoom * 1.25); render(); });
-$('#zoom-out').addEventListener('click', () => { state.zoom = Math.max(.2, state.zoom / 1.25); render(); });
+$('#zoom-out').addEventListener('click', () => { state.zoom = Math.max(.01, state.zoom / 1.25); render(); });
 $('#fit-button').addEventListener('click', fit);
 
 plantForm.addEventListener('submit', event => {
@@ -386,7 +386,7 @@ settingsForm.addEventListener('submit', event => {
   const width = Number(settingsForm.elements.width.value) / CELL_CM;
   const height = Number(settingsForm.elements.height.value) / CELL_CM;
   if (!name || !Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > MAX_CELLS || height > MAX_CELLS) {
-    $('#settings-error').textContent = 'Enter a name and dimensions from 10 to 1500 cm in multiples of 10.';
+    $('#settings-error').textContent = `Enter a name and dimensions from 10 to ${MAX_CELLS * CELL_CM} cm in multiples of 10.`;
     return;
   }
   if (settingsMode === 'new' || width !== state.project.width || height !== state.project.height) {
@@ -467,7 +467,7 @@ $('#backup-input').addEventListener('change', async event => {
   const file = event.target.files[0];
   event.target.value = '';
   if (!file) return;
-  if (file.size > 15 * 1024 * 1024) { toast('Backup is too large.'); return; }
+  if (file.size > MAX_PROJECT_BYTES) { toast('Backup is too large. The limit is 25 MB.'); return; }
   try {
     const project = JSON.parse(await file.text());
     const error = validateProject(project);

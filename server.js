@@ -2,13 +2,12 @@ import http from 'node:http';
 import { readFile, mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateProject } from './public/model.js';
+import { MAX_PROJECT_BYTES, validateProject } from './public/model.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 const dataDir = path.resolve(process.env.DATA_DIR || './data');
 const projectFile = path.join(dataDir, 'garden.json');
 const port = Number(process.env.PORT || 3000);
-const MAX_BODY = 15 * 1024 * 1024;
 const files = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/style.css': ['style.css', 'text/css; charset=utf-8'],
@@ -42,8 +41,8 @@ const server = http.createServer(async (req, res) => {
       let size = 0;
       for await (const chunk of req) {
         size += chunk.length;
-        if (size > MAX_BODY) {
-          reply(res, 413, JSON.stringify({ error: 'Project is too large. Use an image under 10 MB.' }));
+        if (size > MAX_PROJECT_BYTES) {
+          reply(res, 413, JSON.stringify({ error: 'Project exceeds the 25 MB limit. Remove or reduce the reference image or project data.' }));
           return;
         }
         chunks.push(chunk);

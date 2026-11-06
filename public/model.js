@@ -1,5 +1,6 @@
 export const CELL_CM = 10;
-export const MAX_CELLS = 150;
+export const MAX_CELLS = 500;
+export const MAX_PROJECT_BYTES = 25 * 1024 * 1024;
 export const MATERIALS = ['sand', 'grass', 'paving'];
 export const UTILITIES = ['water', 'electric'];
 

@@ -97,7 +97,7 @@
           <div class="selected-plant-badge"><span>✳</span><div><strong>Plant details</strong><small>Save your changes below</small></div></div>
           <label>Plant name<input name="name" maxlength="200" required placeholder="e.g. Lavender"></label>
           <label>Type<select name="type"><option value="plant">Plant</option><option value="shrub">Shrub</option><option value="tree">Tree</option></select></label>
-          <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="1500" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="1500" step="10" required></label></div>
+          <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="5000" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="5000" step="10" required></label></div>
           <p class="field-help">Size must be in multiples of 10 cm and fit on soil / sand.</p>
           <div class="form-pair"><label>Column<input name="x" type="number" min="1" required></label><label>Row<input name="y" type="number" min="1" required></label></div>
           <p class="field-help">Position is measured in grid squares from the top left.</p>
@@ -119,9 +119,9 @@
       <div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2 id="settings-title">Project settings</h2></div><button class="icon-button" type="button" id="close-settings" aria-label="Close settings"><svg><use href="#i-close"/></svg></button></div>
       <p>Set the size of the rectangular garden. Width runs left to right; depth runs top to bottom.</p>
       <label>Project name<input name="name" maxlength="200" required></label>
-      <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="1500" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="1500" step="10" required></label></div>
+      <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="5000" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="5000" step="10" required></label></div>
       <div class="size-preview"><strong id="size-preview">—</strong><span>Width → &nbsp; · &nbsp; Depth ↓</span></div>
-      <p class="field-help">Enter multiples of 10 cm (100 cm = 1 m), up to 1,500 cm per side. Each square is 10 × 10 cm.</p>
+      <p class="field-help">Enter multiples of 10 cm (100 cm = 1 m), up to 5,000 cm (50 m) per side. Each square is 10 × 10 cm.</p>
       <p class="field-help" id="settings-warning">Changing the size clears the entire layout and reference image after confirmation.</p>
       <p class="form-error" id="settings-error" role="alert"></p>
       <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" id="settings-submit" type="submit">Save settings</button></div>

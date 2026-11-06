@@ -13,6 +13,15 @@ test('sample and blank projects have valid 10 cm grid data', () => {
   assert.equal(validateProject(project), null);
 });
 
+test('supports 19 × 31 m gardens and validates the 50 m limit', () => {
+  const project = createProject(190, 310, 'Large plot');
+  assert.equal(project.surface.length, 58900);
+  assert.equal(validateProject(project), null);
+  assert.equal(validateProject(createProject(500, 500)), null);
+  assert.match(validateProject(createProject(501, 1)), /settings/i);
+  assert.match(validateProject(createProject(1, 501)), /settings/i);
+});
+
 test('plants must fit entirely on soil, inside the garden and not overlap', () => {
   const project = createProject(4, 4);
   project.surface.fill('sand');

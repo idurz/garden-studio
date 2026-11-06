@@ -40,7 +40,7 @@ The Node server listens on port 3000 by default and stores the project in `./dat
 
 ## Design a garden
 
-The first launch starts with an editable example. Select **New project** to replace it with an empty garden, or **Set garden size** above the plan (also available in **Project settings**) to set the current garden's rectangular dimensions. Width runs left to right and depth runs top to bottom. Enter centimetres: 100 cm = 1 m, and each 10 cm adds one grid square. Dimensions must be multiples of 10 cm, from 10 cm to 1,500 cm per side; the settings show the resulting grid size. Changing the dimensions clears the layout, plants, utilities, and reference image after confirmation. A new project also replaces the current garden. Export first if you want to keep the current design.
+The first launch starts with an editable example. Select **New project** to replace it with an empty garden, or **Set garden size** above the plan (also available in **Project settings**) to set the current garden's rectangular dimensions. Width runs left to right and depth runs top to bottom. Enter centimetres: 100 cm = 1 m, and each 10 cm adds one grid square. For example, a 19 × 31 m plot is **1900 × 3100 cm**, or **190 × 310 squares**. Dimensions must be multiples of 10 cm, from 10 cm to 5,000 cm (50 m) per side; the settings show the resulting grid size. Changing the dimensions clears the layout, plants, utilities, and reference image after confirmation. A new project also replaces the current garden. Export first if you want to keep the current design.
 
 Use **Clear workspace** to select which items to remove while keeping the name and dimensions. Clearing ground cover also removes all plants because they require soil. Other layers and the reference image remain unless selected. Confirm the selection before clearing; this cannot be undone.
 
@@ -50,7 +50,7 @@ Select **Ground cover**, choose soil / sand, grass, or paving, and draw by click
 
 Choose **Water pipes** or **Electricity** to draw or erase utility routes. Use the eye buttons to show or hide layers; visibility does not delete their contents. Routes are diagrammatic grid annotations, not construction plans. Use zoom or **Fit to view** to navigate the plan.
 
-Changes to the plan are saved automatically; check the status in the header. If saving fails, keep the tab open, resolve the storage problem, and use **Retry save**. Plant form edits must be applied with **Save plant details**. **Export** downloads a JSON backup including the reference image; **Project settings → Import backup** replaces the current project with a previously exported file. Only one project is stored at a time. Back up your work before replacing it. The app does not synchronize simultaneous edits in multiple browser tabs; use one tab at a time.
+Changes to the plan are saved automatically; check the status in the header. If saving fails, keep the tab open, resolve the storage problem, and use **Retry save**. Plant form edits must be applied with **Save plant details**. **Export** downloads a JSON backup including the reference image; **Project settings → Import backup** replaces the current project with a previously exported file. Saved projects and imported backups are limited to 25 MB each; exceptionally detailed projects may require a smaller reference image. Only one project is stored at a time. Back up your work before replacing it. The app does not synchronize simultaneous edits in multiple browser tabs; use one tab at a time.
 
 ## Development
 
