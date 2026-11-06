@@ -14,6 +14,7 @@ const state = {
 let saveTimer;
 let toastTimer;
 let settingsMode = 'edit';
+let pendingSettings = null;
 
 function toast(message) {
   const element = $('#toast');
@@ -360,6 +361,8 @@ function updateSizePreview() {
 
 function openSettings(mode) {
   settingsMode = mode;
+  pendingSettings = null;
+  $('#settings-confirmation').hidden = true;
   settingsForm.elements.name.value = mode === 'new' ? 'My garden' : state.project.name;
   settingsForm.elements.width.value = state.project.width * CELL_CM;
   settingsForm.elements.height.value = state.project.height * CELL_CM;
@@ -378,26 +381,53 @@ $('#size-button').addEventListener('click', () => openSettings('edit'));
 $('#new-project-button').addEventListener('click', () => openSettings('new'));
 settingsForm.elements.width.addEventListener('input', updateSizePreview);
 settingsForm.elements.height.addEventListener('input', updateSizePreview);
+settingsForm.addEventListener('input', () => {
+  pendingSettings = null;
+  $('#settings-confirmation').hidden = true;
+  $('#settings-error').textContent = '';
+});
 $('#close-settings').addEventListener('click', () => $('#settings-dialog').close());
 $('#cancel-settings').addEventListener('click', () => $('#settings-dialog').close());
+function saveSettings({ name, width, height }, replace) {
+  if (replace) {
+    state.project = createProject(width, height, name);
+    state.image = null;
+    showPlant(null);
+    fit();
+  } else {
+    state.project.name = name;
+  }
+  pendingSettings = null;
+  $('#settings-confirmation').hidden = true;
+  changed();
+  $('#settings-dialog').close();
+  render();
+  toast(replace ? 'New garden created.' : 'Project settings saved.');
+}
 settingsForm.addEventListener('submit', event => {
   event.preventDefault();
   const name = settingsForm.elements.name.value.trim();
   const width = Number(settingsForm.elements.width.value) / CELL_CM;
   const height = Number(settingsForm.elements.height.value) / CELL_CM;
   if (!name || !Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > MAX_CELLS || height > MAX_CELLS) {
-    $('#settings-error').textContent = `Enter a name and dimensions from 10 to ${MAX_CELLS * CELL_CM} cm in multiples of 10.`;
+    $('#settings-error').textContent = `Enter a project name and dimensions from 10 to ${MAX_CELLS * CELL_CM} cm in multiples of 10. For 19 × 31 m, enter 1900 × 3100 cm.`;
     return;
   }
   if (settingsMode === 'new' || width !== state.project.width || height !== state.project.height) {
-    const message = settingsMode === 'new'
-      ? 'Create a new project? This will replace the current garden, including all materials, plants, utilities, and the reference image. Export a backup first if you want to keep it.'
-      : 'Changing the garden size will clear all materials, plants, utilities, and the reference image. Continue?';
-    if (!confirm(message)) return;
-    state.project = createProject(width, height, name);
-    state.image = null; showPlant(null); fit();
-  } else state.project.name = name;
-  changed(); updateOverview(); $('#settings-dialog').close(); render();
+    pendingSettings = { name, width, height };
+    $('#settings-confirmation').hidden = false;
+    $('#settings-confirm').focus();
+    return;
+  }
+  saveSettings({ name, width, height }, false);
+});
+$('#settings-keep').addEventListener('click', () => {
+  pendingSettings = null;
+  $('#settings-confirmation').hidden = true;
+  $('#settings-submit').focus();
+});
+$('#settings-confirm').addEventListener('click', () => {
+  if (pendingSettings) saveSettings(pendingSettings, true);
 });
 
 const clearForm = $('#clear-form');

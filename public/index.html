@@ -115,16 +115,21 @@
   </main>
 
   <dialog id="settings-dialog">
-    <form id="settings-form">
+    <form id="settings-form" novalidate>
       <div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2 id="settings-title">Project settings</h2></div><button class="icon-button" type="button" id="close-settings" aria-label="Close settings"><svg><use href="#i-close"/></svg></button></div>
       <p>Set the size of the rectangular garden. Width runs left to right; depth runs top to bottom.</p>
       <label>Project name<input name="name" maxlength="200" required></label>
       <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="5000" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="5000" step="10" required></label></div>
       <div class="size-preview"><strong id="size-preview">—</strong><span>Width → &nbsp; · &nbsp; Depth ↓</span></div>
-      <p class="field-help">Enter multiples of 10 cm (100 cm = 1 m), up to 5,000 cm (50 m) per side. Each square is 10 × 10 cm.</p>
+      <p class="field-help">Enter multiples of 10 cm (100 cm = 1 m), up to 5,000 cm (50 m) per side. For 19 × 31 m, enter 1900 × 3100 cm. Each square is 10 × 10 cm.</p>
       <p class="field-help" id="settings-warning">Changing the size clears the entire layout and reference image after confirmation.</p>
       <p class="form-error" id="settings-error" role="alert"></p>
       <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" id="settings-submit" type="submit">Save settings</button></div>
+      <div id="settings-confirmation" class="settings-confirmation" hidden role="region" aria-labelledby="settings-confirmation-title">
+        <strong id="settings-confirmation-title">Replace the current garden?</strong>
+        <p>All existing materials, plants, utilities and the reference image will be removed. Export a backup first if you want to keep them.</p>
+        <div class="dialog-actions"><button class="button button-quiet" id="settings-keep" type="button">Keep current garden</button><button class="button button-dark" id="settings-confirm" type="button">Replace garden</button></div>
+      </div>
       <div id="backup-section"><div class="dialog-divider"></div>
       <div class="backup-section"><div><strong>Have a backup?</strong><p>Import a Garden Studio JSON backup to replace this project.</p></div><label class="button button-quiet" for="backup-input">Import backup</label><input type="file" id="backup-input" accept="application/json,.json" hidden></div></div>
     </form>
