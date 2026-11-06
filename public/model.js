@@ -13,6 +13,19 @@ export function createProject(width = 80, height = 60, name = 'My garden') {
   };
 }
 
+export function clearProjectLayers(project, layers) {
+  if (layers.includes('surface')) {
+    project.surface.fill('');
+    project.plants = [];
+  } else if (layers.includes('plants')) {
+    project.plants = [];
+  }
+  for (const layer of UTILITIES) {
+    if (layers.includes(layer)) project[layer].fill(false);
+  }
+  if (layers.includes('image')) project.image = null;
+}
+
 export function createSample() {
   const project = createProject(60, 40, 'The garden plan');
   for (let y = 0; y < project.height; y++) {

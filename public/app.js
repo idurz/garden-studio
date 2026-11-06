@@ -1,4 +1,4 @@
-import { CELL_CM, MAX_CELLS, createProject, createSample, inBounds, plantAt, plantFits, validateProject } from './model.js';
+import { CELL_CM, MAX_CELLS, clearProjectLayers, createProject, createSample, inBounds, plantAt, plantFits, validateProject } from './model.js';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#garden-canvas');
@@ -13,6 +13,7 @@ const state = {
 };
 let saveTimer;
 let toastTimer;
+let settingsMode = 'edit';
 
 function toast(message) {
   const element = $('#toast');
@@ -77,6 +78,7 @@ function updateOverview() {
   const p = state.project;
   $('#project-name').textContent = p.name;
   $('#canvas-dimensions').textContent = `${(p.width / 10).toFixed(1)} m × ${(p.height / 10).toFixed(1)} m · 10 cm grid`;
+  $('#size-bar-dimensions').textContent = `${(p.width / 10).toFixed(1)} m wide × ${(p.height / 10).toFixed(1)} m deep`;
   $('#overview-size').textContent = `${(p.width / 10).toFixed(1)} × ${(p.height / 10).toFixed(1)} m`;
   $('#overview-area').textContent = `${(p.width * p.height / 100).toFixed(1)} m²`;
   $('#overview-plants').textContent = p.plants.length;
@@ -345,13 +347,37 @@ $('#delete-plant').addEventListener('click', () => {
   }
 });
 
-$('#settings-button').addEventListener('click', () => {
-  settingsForm.elements.name.value = state.project.name;
+function updateSizePreview() {
+  const width = Number(settingsForm.elements.width.value);
+  const height = Number(settingsForm.elements.height.value);
+  const valid = settingsForm.elements.width.value && settingsForm.elements.height.value &&
+    Number.isInteger(width / CELL_CM) && Number.isInteger(height / CELL_CM) &&
+    width >= CELL_CM && height >= CELL_CM && width <= MAX_CELLS * CELL_CM && height <= MAX_CELLS * CELL_CM;
+  $('#size-preview').textContent = valid
+    ? `${(width / 100).toFixed(1)} m × ${(height / 100).toFixed(1)} m · ${width / CELL_CM} × ${height / CELL_CM} squares`
+    : 'Enter valid dimensions to see the grid size.';
+}
+
+function openSettings(mode) {
+  settingsMode = mode;
+  settingsForm.elements.name.value = mode === 'new' ? 'My garden' : state.project.name;
   settingsForm.elements.width.value = state.project.width * CELL_CM;
   settingsForm.elements.height.value = state.project.height * CELL_CM;
+  $('#settings-title').textContent = mode === 'new' ? 'New project' : 'Project settings';
+  $('#settings-submit').textContent = mode === 'new' ? 'Create new project' : 'Save settings';
+  $('#settings-warning').textContent = mode === 'new'
+    ? 'A new project replaces the current garden. Export a backup first if you want to keep it.'
+    : 'Changing the size clears the entire layout and reference image after confirmation.';
+  $('#backup-section').hidden = mode === 'new';
   $('#settings-error').textContent = '';
+  updateSizePreview();
   $('#settings-dialog').showModal();
-});
+}
+$('#settings-button').addEventListener('click', () => openSettings('edit'));
+$('#size-button').addEventListener('click', () => openSettings('edit'));
+$('#new-project-button').addEventListener('click', () => openSettings('new'));
+settingsForm.elements.width.addEventListener('input', updateSizePreview);
+settingsForm.elements.height.addEventListener('input', updateSizePreview);
 $('#close-settings').addEventListener('click', () => $('#settings-dialog').close());
 $('#cancel-settings').addEventListener('click', () => $('#settings-dialog').close());
 settingsForm.addEventListener('submit', event => {
@@ -363,12 +389,42 @@ settingsForm.addEventListener('submit', event => {
     $('#settings-error').textContent = 'Enter a name and dimensions from 10 to 1500 cm in multiples of 10.';
     return;
   }
-  if (width !== state.project.width || height !== state.project.height) {
-    if (!confirm('Changing the garden size will clear all materials, plants, utilities, and the reference image. Continue?')) return;
+  if (settingsMode === 'new' || width !== state.project.width || height !== state.project.height) {
+    const message = settingsMode === 'new'
+      ? 'Create a new project? This will replace the current garden, including all materials, plants, utilities, and the reference image. Export a backup first if you want to keep it.'
+      : 'Changing the garden size will clear all materials, plants, utilities, and the reference image. Continue?';
+    if (!confirm(message)) return;
     state.project = createProject(width, height, name);
     state.image = null; showPlant(null); fit();
   } else state.project.name = name;
   changed(); updateOverview(); $('#settings-dialog').close(); render();
+});
+
+const clearForm = $('#clear-form');
+$('#clear-workspace-button').addEventListener('click', () => {
+  clearForm.reset();
+  $('#clear-error').textContent = '';
+  $('#clear-dialog').showModal();
+});
+$('#close-clear').addEventListener('click', () => $('#clear-dialog').close());
+$('#cancel-clear').addEventListener('click', () => $('#clear-dialog').close());
+clearForm.addEventListener('submit', event => {
+  event.preventDefault();
+  const layers = [...clearForm.querySelectorAll('input[name="layer"]:checked')].map(input => input.value);
+  if (!layers.length) {
+    $('#clear-error').textContent = 'Select at least one item to clear.';
+    return;
+  }
+  const names = { surface: 'ground cover', plants: 'plants and trees', water: 'water pipes', electric: 'electricity', image: 'reference image' };
+  const selected = layers.map(layer => names[layer]);
+  if (layers.includes('surface') && !layers.includes('plants')) selected.push('plants and trees (required when clearing ground cover)');
+  if (!confirm(`Clear ${selected.join(', ')}? This cannot be undone. Export a backup first if needed.`)) return;
+  clearProjectLayers(state.project, layers);
+  if (layers.includes('surface') || layers.includes('plants')) showPlant(null);
+  if (layers.includes('image')) state.image = null;
+  changed(); render();
+  $('#clear-dialog').close();
+  toast('Selected items cleared.');
 });
 
 $('#image-input').addEventListener('change', async event => {

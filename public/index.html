@@ -40,6 +40,10 @@
   <main class="app-shell">
     <aside class="sidebar left-sidebar">
       <div class="sidebar-header"><span class="eyebrow">YOUR WORKSPACE</span><h2>Design tools</h2><p>Bring your garden to life, one square at a time.</p></div>
+      <div class="project-actions">
+        <button class="button button-dark" id="new-project-button"><svg><use href="#i-plus"/></svg> New project</button>
+        <button class="button button-quiet" id="clear-workspace-button"><svg><use href="#i-eraser"/></svg> Clear workspace</button>
+      </div>
       <section class="sidebar-section">
         <div class="section-title"><span>TOOLS</span><span class="section-hint">01</span></div>
         <div class="tool-grid" role="group" aria-label="Editing tools">
@@ -74,6 +78,7 @@
       <div class="workspace-heading"><div><div class="breadcrumb">MY GARDEN <span>/</span> <strong>DESIGN EDITOR</strong></div><h1>Your garden, imagined<span>.</span></h1><p>Make a little space for big ideas.</p></div><div class="heading-badge"><span></span> DESIGN MODE</div></div>
       <div class="editor-card">
         <div class="editor-toolbar"><div class="canvas-title"><span class="canvas-title-icon"><svg><use href="#i-grid"/></svg></span><div><strong>Garden layout</strong><small id="canvas-dimensions">6.0 m × 4.0 m · 10 cm grid</small></div></div><div class="canvas-actions"><button class="icon-button" id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-label">100%</span><button class="icon-button" id="zoom-in" aria-label="Zoom in">+</button><span class="toolbar-divider"></span><button class="fit-button" id="fit-button">Fit to view</button></div></div>
+        <div class="size-bar"><span>Rectangle: <strong id="size-bar-dimensions"></strong></span><button id="size-button" type="button">Set garden size</button></div>
         <div class="canvas-scroll" id="canvas-scroll"><div class="canvas-wrap" id="canvas-wrap"><canvas id="garden-canvas" aria-label="Garden plan editor">Your browser does not support canvas.</canvas></div></div>
         <div class="editor-footer"><div><span class="footer-dot"></span><span id="editor-hint">Select a plant to see its details.</span></div><span id="coordinates">10 cm per square</span></div>
       </div>
@@ -111,15 +116,33 @@
 
   <dialog id="settings-dialog">
     <form id="settings-form">
-      <div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2>Project settings</h2></div><button class="icon-button" type="button" id="close-settings" aria-label="Close settings"><svg><use href="#i-close"/></svg></button></div>
-      <p>Set the size of your garden. Each dimension must be a multiple of 10 cm.</p>
+      <div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2 id="settings-title">Project settings</h2></div><button class="icon-button" type="button" id="close-settings" aria-label="Close settings"><svg><use href="#i-close"/></svg></button></div>
+      <p>Set the size of the rectangular garden. Width runs left to right; depth runs top to bottom.</p>
       <label>Project name<input name="name" maxlength="200" required></label>
       <div class="form-pair"><label>Width (cm)<input name="width" type="number" min="10" max="1500" step="10" required></label><label>Depth (cm)<input name="height" type="number" min="10" max="1500" step="10" required></label></div>
-      <p class="field-help">Maximum size: 15 × 15 m. Changing the size starts a new empty layout.</p>
+      <div class="size-preview"><strong id="size-preview">—</strong><span>Width → &nbsp; · &nbsp; Depth ↓</span></div>
+      <p class="field-help">Enter multiples of 10 cm (100 cm = 1 m), up to 1,500 cm per side. Each square is 10 × 10 cm.</p>
+      <p class="field-help" id="settings-warning">Changing the size clears the entire layout and reference image after confirmation.</p>
       <p class="form-error" id="settings-error" role="alert"></p>
-      <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" type="submit">Save settings</button></div>
-      <div class="dialog-divider"></div>
-      <div class="backup-section"><div><strong>Have a backup?</strong><p>Import a Garden Studio JSON backup to replace this project.</p></div><label class="button button-quiet" for="backup-input">Import backup</label><input type="file" id="backup-input" accept="application/json,.json" hidden></div>
+      <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-settings">Cancel</button><button class="button button-dark" id="settings-submit" type="submit">Save settings</button></div>
+      <div id="backup-section"><div class="dialog-divider"></div>
+      <div class="backup-section"><div><strong>Have a backup?</strong><p>Import a Garden Studio JSON backup to replace this project.</p></div><label class="button button-quiet" for="backup-input">Import backup</label><input type="file" id="backup-input" accept="application/json,.json" hidden></div></div>
+    </form>
+  </dialog>
+  <dialog id="clear-dialog" aria-labelledby="clear-title">
+    <form id="clear-form">
+      <div class="dialog-heading"><div><span class="eyebrow">START FRESH</span><h2 id="clear-title">Clear workspace</h2></div><button class="icon-button" type="button" id="close-clear" aria-label="Close clear workspace"><svg><use href="#i-close"/></svg></button></div>
+      <p>Choose what to clear. Your garden name and dimensions will stay the same. Export a backup first if you may want to restore the current plan.</p>
+      <fieldset class="clear-options"><legend>Items to clear</legend>
+        <label><input type="checkbox" name="layer" value="surface"> Ground cover</label>
+        <label><input type="checkbox" name="layer" value="plants"> Plants &amp; trees</label>
+        <label><input type="checkbox" name="layer" value="water"> Water pipes</label>
+        <label><input type="checkbox" name="layer" value="electric"> Electricity</label>
+        <label><input type="checkbox" name="layer" value="image"> Reference image</label>
+      </fieldset>
+      <p class="field-help">Clearing ground cover also removes all plants because they require soil. Other layers stay unchanged unless selected.</p>
+      <p class="form-error" id="clear-error" role="alert"></p>
+      <div class="dialog-actions"><button class="button button-quiet" type="button" id="cancel-clear">Cancel</button><button class="button button-dark" type="submit">Clear selected</button></div>
     </form>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

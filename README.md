@@ -40,7 +40,9 @@ The Node server listens on port 3000 by default and stores the project in `./dat
 
 ## Design a garden
 
-The first launch starts with an editable example. Open **Project settings** to name your garden and set its width and depth in centimetres. Dimensions must be multiples of 10 cm, from 10 cm to 1,500 cm per side. Changing the dimensions clears the layout, plants, utilities, and reference image after confirmation. Export first if you want to keep the current design.
+The first launch starts with an editable example. Select **New project** to replace it with an empty garden, or **Set garden size** above the plan (also available in **Project settings**) to set the current garden's rectangular dimensions. Width runs left to right and depth runs top to bottom. Enter centimetres: 100 cm = 1 m, and each 10 cm adds one grid square. Dimensions must be multiples of 10 cm, from 10 cm to 1,500 cm per side; the settings show the resulting grid size. Changing the dimensions clears the layout, plants, utilities, and reference image after confirmation. A new project also replaces the current garden. Export first if you want to keep the current design.
+
+Use **Clear workspace** to select which items to remove while keeping the name and dimensions. Clearing ground cover also removes all plants because they require soil. Other layers and the reference image remain unless selected. Confirm the selection before clearing; this cannot be undone.
 
 Upload a PNG, JPEG, or WebP image up to 10 MB under **Design reference**. The image is stretched to fill the whole rectangular garden; make sure its edges match the dimensions you entered. It is a tracing reference, not automatic recognition of surfaces or plants. Adjust its opacity or remove it as needed. The image is included in the saved project and backups.
 

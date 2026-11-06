@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createProject, createSample, plantAt, plantFits, validateProject } from '../public/model.js';
+import { clearProjectLayers, createProject, createSample, plantAt, plantFits, validateProject } from '../public/model.js';
 
 function plant(overrides = {}) {
   return { id: 'one', name: 'Fern', type: 'plant', x: 0, y: 0, width: 2, height: 2, purchased: '', retailer: '', prune: '', notes: '', ...overrides };
@@ -44,4 +44,35 @@ test('validation rejects malformed grids, images, duplicate IDs and overlapping 
   project.image = null;
   project.water.pop();
   assert.ok(validateProject(project));
+});
+
+test('clearing selected layers preserves other garden data', () => {
+  const project = createSample();
+  project.water[0] = true;
+  project.electric[1] = true;
+  project.image = 'data:image/png;base64,abcd';
+  const surface = [...project.surface];
+  clearProjectLayers(project, ['water', 'image']);
+  assert.deepEqual(project.surface, surface);
+  assert.equal(project.plants.length, 5);
+  assert.equal(project.water[0], false);
+  assert.equal(project.electric[1], true);
+  assert.equal(project.image, null);
+  assert.equal(validateProject(project), null);
+  clearProjectLayers(project, ['surface']);
+  assert.ok(project.surface.every(cell => cell === ''));
+  assert.equal(project.plants.length, 0);
+  assert.equal(project.electric[1], true);
+  assert.equal(validateProject(project), null);
+});
+
+test('clearing only plants keeps their soil and utilities', () => {
+  const project = createSample();
+  project.water[0] = true;
+  const surface = [...project.surface];
+  clearProjectLayers(project, ['plants']);
+  assert.deepEqual(project.surface, surface);
+  assert.equal(project.plants.length, 0);
+  assert.equal(project.water[0], true);
+  assert.equal(validateProject(project), null);
 });
