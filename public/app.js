@@ -1,13 +1,14 @@
-import { CELL_CM, MAX_CELLS, MAX_PROJECT_BYTES, buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, inBounds, plantAt, plantFits, validateProject } from './model.js';
+import { CELL_CM, MAX_CELLS, MAX_PROJECT_BYTES, buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, inBounds, plantAt, plantFits, surfaceBrushBounds, validateProject } from './model.js';
 
 const $ = selector => document.querySelector(selector);
 const canvas = $('#garden-canvas');
 const ctx = canvas.getContext('2d');
+const brushCursor = $('#brush-cursor');
 const scroll = $('#canvas-scroll');
 const plantForm = $('#plant-form');
 const settingsForm = $('#settings-form');
 const state = {
-  project: null, layer: 'surface', tool: 'select', material: 'sand', selectedId: null,
+  project: null, layer: 'surface', tool: 'select', material: 'sand', brushSize: 1, hoverCell: null, selectedId: null,
   buildingId: null, buildingMaterial: 'wall',
   visible: { surface: true, buildings: true, plants: true, water: false, electric: false },
   zoom: 1, image: null, drawing: false, lastCell: null, dirty: 0, saved: 0, saving: false, canSave: false
@@ -197,6 +198,24 @@ function render() {
     }
   }
   $('#zoom-label').textContent = `${Math.round(state.zoom * 100)}%`;
+  updateBrushCursor();
+}
+
+function updateBrushCursor() {
+  const cell = state.hoverCell;
+  const show = state.project && cell && inBounds(state.project, cell.x, cell.y) &&
+    state.layer === 'surface' && (state.tool === 'paint' || state.tool === 'erase');
+  brushCursor.hidden = !show;
+  if (!show) return;
+  const bounds = surfaceBrushBounds(state.project, cell.x, cell.y, state.brushSize);
+  const canvasRect = canvas.getBoundingClientRect();
+  const wrapRect = $('#canvas-wrap').getBoundingClientRect();
+  const cellWidth = canvasRect.width / state.project.width;
+  const cellHeight = canvasRect.height / state.project.height;
+  brushCursor.style.left = `${canvasRect.left - wrapRect.left + bounds.left * cellWidth}px`;
+  brushCursor.style.top = `${canvasRect.top - wrapRect.top + bounds.top * cellHeight}px`;
+  brushCursor.style.width = `${(bounds.right - bounds.left) * cellWidth}px`;
+  brushCursor.style.height = `${(bounds.bottom - bounds.top) * cellHeight}px`;
 }
 
 function updateControls() {
@@ -313,7 +332,16 @@ function paintLine(from, to) {
   const sx = x < to.x ? 1 : -1, sy = y < to.y ? 1 : -1;
   let error = dx - dy, modified = false;
   while (true) {
-    modified = paintCell(x, y) || modified;
+    if (state.layer === 'surface') {
+      const bounds = surfaceBrushBounds(state.project, x, y, state.brushSize);
+      for (let brushY = bounds.top; brushY < bounds.bottom; brushY++) {
+        for (let brushX = bounds.left; brushX < bounds.right; brushX++) {
+          modified = paintCell(brushX, brushY) || modified;
+        }
+      }
+    } else {
+      modified = paintCell(x, y) || modified;
+    }
     if (x === to.x && y === to.y) break;
     const twice = error * 2;
     if (twice > -dy) { error -= dy; x += sx; if (state.layer === 'buildings' && twice < dx) modified = paintCell(x, y) || modified; }
@@ -326,6 +354,8 @@ canvas.addEventListener('pointerdown', event => {
   if (event.button !== 0) return;
   const cell = point(event);
   if (!inBounds(state.project, cell.x, cell.y)) return;
+  state.hoverCell = cell;
+  updateBrushCursor();
   event.preventDefault();
   if (state.tool === 'select') {
     if (state.layer === 'buildings') {
@@ -364,6 +394,8 @@ canvas.addEventListener('pointerdown', event => {
 });
 canvas.addEventListener('pointermove', event => {
   const cell = point(event);
+  state.hoverCell = inBounds(state.project, cell.x, cell.y) ? cell : null;
+  updateBrushCursor();
   if (inBounds(state.project, cell.x, cell.y)) $('#coordinates').textContent = `Column ${cell.x + 1}, row ${cell.y + 1} · 10 cm per square`;
   if (state.drawing && inBounds(state.project, cell.x, cell.y)) { paintLine(state.lastCell, cell); state.lastCell = cell; }
 });
@@ -371,8 +403,16 @@ function stopDrawing() { state.drawing = false; state.lastCell = null; }
 canvas.addEventListener('pointerup', stopDrawing);
 canvas.addEventListener('pointercancel', stopDrawing);
 canvas.addEventListener('lostpointercapture', stopDrawing);
-canvas.addEventListener('pointerleave', () => { $('#coordinates').textContent = '10 cm per square'; });
+canvas.addEventListener('pointerleave', () => {
+  state.hoverCell = null;
+  updateBrushCursor();
+  $('#coordinates').textContent = '10 cm per square';
+});
 
+$('#brush-size').addEventListener('change', event => {
+  state.brushSize = Number(event.target.value);
+  updateBrushCursor();
+});
 document.querySelectorAll('[data-tool]').forEach(button => button.addEventListener('click', () => { state.tool = button.dataset.tool; updateControls(); }));
 document.querySelectorAll('[data-layer]').forEach(button => button.addEventListener('click', () => {
   state.layer = button.dataset.layer;

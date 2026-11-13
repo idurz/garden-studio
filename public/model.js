@@ -54,6 +54,14 @@ export function inBounds(project, x, y) {
   return Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < project.width && y < project.height;
 }
 
+export function surfaceBrushBounds(project, x, y, size) {
+  const radius = Math.floor(size / 2);
+  return {
+    left: Math.max(0, x - radius), top: Math.max(0, y - radius),
+    right: Math.min(project.width, x + radius + 1), bottom: Math.min(project.height, y + radius + 1)
+  };
+}
+
 export function plantFits(project, plant, ignoreId = null) {
   if (!Number.isInteger(plant.x) || !Number.isInteger(plant.y) ||
       !Number.isInteger(plant.width) || !Number.isInteger(plant.height) ||

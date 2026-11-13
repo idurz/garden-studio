@@ -1,10 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, plantAt, plantFits, validateProject } from '../public/model.js';
+import { buildingAt, clearProjectLayers, createProject, createSample, editBuildingCell, plantAt, plantFits, surfaceBrushBounds, validateProject } from '../public/model.js';
 
 function plant(overrides = {}) {
   return { id: 'one', name: 'Fern', type: 'plant', x: 0, y: 0, width: 2, height: 2, purchased: '', retailer: '', prune: '', notes: '', ...overrides };
 }
+
+test('surface brush bounds are centered and clipped to the garden', () => {
+  const project = createProject(8, 8);
+  assert.deepEqual(surfaceBrushBounds(project, 3, 3, 1), { left: 3, top: 3, right: 4, bottom: 4 });
+  assert.deepEqual(surfaceBrushBounds(project, 3, 3, 3), { left: 2, top: 2, right: 5, bottom: 5 });
+  assert.deepEqual(surfaceBrushBounds(project, 3, 3, 5), { left: 1, top: 1, right: 6, bottom: 6 });
+  assert.deepEqual(surfaceBrushBounds(project, 0, 7, 5), { left: 0, top: 5, right: 3, bottom: 8 });
+});
 
 test('sample and blank projects have valid 10 cm grid data', () => {
   assert.equal(validateProject(createSample()), null);

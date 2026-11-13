@@ -71,6 +71,12 @@
           <button class="material-button" data-material="grass"><span class="material-swatch grass"></span><span><strong>Grass</strong><small>Soft &amp; green</small></span><span class="material-check">✓</span></button>
           <button class="material-button" data-material="paving"><span class="material-swatch paving"></span><span><strong>Paving</strong><small>Paths &amp; patios</small></span><span class="material-check">✓</span></button>
         </div>
+        <label class="brush-label" for="brush-size">Brush size</label>
+        <select id="brush-size">
+          <option value="1">10 × 10 cm</option>
+          <option value="3">30 × 30 cm</option>
+          <option value="5">50 × 50 cm</option>
+        </select>
       </section>
       <section class="sidebar-section" id="buildings-section" hidden>
         <div class="section-title"><span>MATERIALS</span><span class="section-hint">03</span></div>
@@ -94,7 +100,7 @@
       <div class="editor-card">
         <div class="editor-toolbar"><div class="canvas-title"><span class="canvas-title-icon"><svg><use href="#i-grid"/></svg></span><div><strong>Garden layout</strong><small id="canvas-dimensions">6.0 m × 4.0 m · 10 cm grid</small></div></div><div class="canvas-actions"><button class="icon-button" id="zoom-out" aria-label="Zoom out">−</button><span id="zoom-label">100%</span><button class="icon-button" id="zoom-in" aria-label="Zoom in">+</button><span class="toolbar-divider"></span><button class="fit-button" id="fit-button">Fit to view</button></div></div>
         <div class="size-bar"><span>Rectangle: <strong id="size-bar-dimensions"></strong></span><button id="size-button" type="button">Set garden size</button></div>
-        <div class="canvas-scroll" id="canvas-scroll"><div class="canvas-wrap" id="canvas-wrap"><canvas id="garden-canvas" aria-label="Garden plan editor">Your browser does not support canvas.</canvas></div></div>
+        <div class="canvas-scroll" id="canvas-scroll"><div class="canvas-wrap" id="canvas-wrap"><canvas id="garden-canvas" aria-label="Garden plan editor">Your browser does not support canvas.</canvas><div id="brush-cursor" hidden aria-hidden="true"></div></div></div>
         <div class="editor-footer"><div><span class="footer-dot"></span><span id="editor-hint">Select a plant to see its details.</span></div><span id="coordinates">10 cm per square</span></div>
       </div>
       <div class="workspace-bottom"><span>✳ &nbsp; A garden is a work in progress. Enjoy the process.</span><span>MADE FOR GROWING THINGS</span></div>
